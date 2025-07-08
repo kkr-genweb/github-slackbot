@@ -5,6 +5,12 @@ import requests
 import datetime
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from openai import OpenAI
+
+# Instantiate the OpenAI client (no custom base_url).
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY") or os.getenv("_OPENAI_API_KEY"),
+)
 
 # --- Load tokens from env ---
 GITHUB_TOKEN = os.getenv("GH_TOKEN")
@@ -82,6 +88,38 @@ def get_issues(repo):
             closed += 1
     return created, closed
 
+def get_repo_readme(repo):
+    url = f"https://api.github.com/repos/{ORG}/{repo}/readme"
+    resp = requests.get(url, headers=HEADERS)
+    if resp.status_code != 200:
+        return None
+
+    data = resp.json()
+    if "content" not in data:
+        return None
+
+    import base64
+    content = base64.b64decode(data["content"]).decode("utf-8")
+    return content
+
+def summarize_readme(readme_text):
+    if not readme_text:
+        return "README not found or empty."
+
+    prompt = (
+        "You are a helpful business analyst.\n\n"
+        "Summarize the following GitHub README in simple terms so a business person "
+        "can understand what this project does and why it might matter.\n\n"
+        f"README:\n{readme_text[:3000]}"  # Truncate for token limit.
+    )
+
+    response = client.responses.create(
+        model="gpt-4o",
+        input=prompt
+    )
+
+    return response.output_text
+
 # --- Slack app ---
 app = App(token=SLACK_BOT_TOKEN)
 
@@ -110,14 +148,17 @@ def handle_app_mention_events(body, say):
             })
         say(blocks=blocks)
     else:
-        say(f"Hi <@{user}>, I don't recognize that command!")
+        say(f"Hi <@{user}>, I don't recognize that command. Try invoking with \"list repos\".")
 
 @app.action("repo_button")
 def handle_repo_click(ack, body, say):
     ack()
     repo = body["actions"][0]["value"]
     report = get_repo_report(repo)
-    say(report)
+    readme = get_repo_readme(repo)
+    summary = summarize_readme(readme)
+
+    say(f"{report}\n\n*GPT4o Biz Summary of README:*\n{summary}")
 
 # --- Run app ---
 if __name__ == "__main__":

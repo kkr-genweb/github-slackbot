@@ -1,6 +1,6 @@
 # GitHub Slack Bot
 
-A Slack bot that integrates with GitHub to provide repository activity reports directly in Slack. The bot can list repositories and generate reports on commits, PRs, and issues from the past week.
+A Slack bot that integrates with GitHub to provide repository activity reports directly in Slack. The bot can list repositories and generate reports on commits, PRs, and issues from the past week, along with AI-powered README summaries.
 
 ## Features
 
@@ -9,6 +9,7 @@ A Slack bot that integrates with GitHub to provide repository activity reports d
   - Commit count from the past week
   - PR status (merged, open, closed)
   - Issue status (created, closed)
+- AI-powered business-friendly summaries of repository READMEs using GPT-4o
 - Simple hello bot example included
 
 ## Requirements
@@ -16,6 +17,7 @@ A Slack bot that integrates with GitHub to provide repository activity reports d
 - Python 3.12+
 - Slack App with Bot Token and Socket Mode enabled
 - GitHub Personal Access Token
+- OpenAI API Key (for README summarization feature)
 
 ## Setup with UV
 
@@ -28,12 +30,13 @@ uv sync
 
 ### 2. Set Environment Variables
 
-Create a `.env` file in the project root with the following variables that you will get from github and slack:
+Create a `.env` file in the project root with the following variables that you will get from GitHub, Slack, and OpenAI:
 
 ```
 SLACK_BOT_TOKEN=xoxb-your-bot-token
 SLACK_APP_TOKEN=xapp-your-app-token
 GH_TOKEN=your-github-personal-access-token
+OPENAI_API_KEY=your-openai-api-key
 ```
 
 Alternatively, you can use a script to set these variables in your environment by running `source token_setter.sh` which should set the variables for you using exports per below:
@@ -41,6 +44,7 @@ Alternatively, you can use a script to set these variables in your environment b
 export GH_TOKEN="ghp_XXXX"
 export SLACK_BOT_TOKEN="xoxb-XXXX"
 export SLACK_APP_TOKEN="xapp-XXXX"
+export OPENAI_API_KEY="sk-XXXX"
 ```
 ### 3. Run the Bot
 
@@ -139,7 +143,7 @@ It should reply with a list of repositories.
 Once the bot is running, mention it in any channel with:
 
 - `@YourBot list repos` - Shows a list of repositories with clickable buttons
-- Click on any repository button to get a detailed activity report
+- Click on any repository button to get a detailed activity report and an AI-generated business-friendly summary of the repository's README
 
 ## Project Structure
 
